@@ -4,9 +4,14 @@ import { BROWSER_PROFILE_DIR, PROJECTS, SCREENSHOT_DIR, detectBrowserExecutableP
 
 const SHORT_TIMEOUT = 5_000;
 const MEDIUM_TIMEOUT = 15_000;
-const LONG_TIMEOUT = 60_000;
-const LOGIN_TIMEOUT = 10 * 60_000;
+const LONG_TIMEOUT = 30_000;
+const LOGIN_TIMEOUT = 5 * 60_000;
 export const BITBUCKET_MERGE_CONFIRM_SELECTOR = '[role="dialog"] button.action-button';
+export const JARVIS_STATUS_ICON_SELECTOR = "i.fas.fa-circle";
+export const JARVIS_SUCCESS_CLASS = "deploy-status-0";
+export const JARVIS_DEPLOY_STATUS_ICON_SELECTOR = JARVIS_STATUS_ICON_SELECTOR;
+export const JARVIS_DEPLOY_SUCCESS_CLASS = JARVIS_SUCCESS_CLASS;
+const JARVIS_STATUS_TIMEOUT = 10 * 60_000;
 
 let retainedContext = null;
 
@@ -126,7 +131,7 @@ async function runBitbucketMerge(page, project, branchName, log, signal, runId, 
 	const step = "bitbucket-pr";
 	const pullRequestUrl = buildBitbucketPullRequestUrl(project.bitbucket.url, branchName);
 	log("info", "Bitbucket PR 생성 페이지로 이동합니다.", { url: pullRequestUrl });
-	await page.goto(pullRequestUrl, { waitUntil: "domcontentloaded", timeout: LONG_TIMEOUT });
+	await page.goto(pullRequestUrl, { waitUntil: "domcontentloaded", timeout: MEDIUM_TIMEOUT });
 	await waitForLoginOrPage(page, "code.skplanet.com", log, signal);
 	await page.waitForLoadState("networkidle", { timeout: LONG_TIMEOUT }).catch(() => { });
 	await waitStepDelay(page, stepDelayMs, log, "Bitbucket PR 페이지 로드 후", signal);
@@ -138,7 +143,7 @@ async function runBitbucketMerge(page, project, branchName, log, signal, runId, 
 
 	assertNotAborted(signal);
 	await clickButton(page, ["Create", "Create pull request", "생성"], "PR을 생성할 수 없습니다.");
-	await page.waitForLoadState("networkidle", { timeout: LONG_TIMEOUT }).catch(() => { });
+	await page.waitForLoadState("networkidle", { timeout: MEDIUM_TIMEOUT }).catch(() => { });
 	await waitStepDelay(page, stepDelayMs, log, "PR Create 후", signal);
 
 	assertNotAborted(signal);
@@ -147,7 +152,7 @@ async function runBitbucketMerge(page, project, branchName, log, signal, runId, 
 
 	assertNotAborted(signal);
 	await clickBitbucketMergeConfirm(page);
-	await page.waitForLoadState("networkidle", { timeout: LONG_TIMEOUT }).catch(() => { });
+	await page.waitForLoadState("networkidle", { timeout: MEDIUM_TIMEOUT }).catch(() => { });
 	await waitStepDelay(page, stepDelayMs, log, "PR Merge 확인 후", signal);
 
 	const signalText = await waitForAnyVisibleText(page, ["Merged", "merged", "머지", "병합"], MEDIUM_TIMEOUT).catch(() => "");
@@ -212,12 +217,12 @@ async function runJarvisBuild(page, { targetKey, target, mode, log, signal, runI
 	log("info", `Jarvis ${target.label} 설정으로 이동합니다.`, { url: target.url });
 	await page.goto(target.url, { waitUntil: "domcontentloaded", timeout: LONG_TIMEOUT });
 	await waitForLoginOrPage(page, "devjarvis.skplanet.com", log, signal);
-	await page.waitForLoadState("networkidle", { timeout: LONG_TIMEOUT }).catch(() => { });
+	await page.waitForLoadState("networkidle", { timeout: SHORT_TIMEOUT }).catch(() => { });
 	await waitStepDelay(page, stepDelayMs, log, `${target.label} Jarvis 페이지 로드 후`, signal);
 
 	assertNotAborted(signal);
 	await clickButton(page, ["Build", "빌드"], `${target.label} Build 버튼을 찾을 수 없습니다.`);
-	await page.waitForLoadState("networkidle", { timeout: MEDIUM_TIMEOUT }).catch(() => { });
+	await page.waitForLoadState("networkidle", { timeout: SHORT_TIMEOUT }).catch(() => { });
 	await waitStepDelay(page, stepDelayMs, log, `${target.label} Build 팝업 표시 후`, signal);
 
 	if (mode === "buildAndDeploy") {
@@ -229,7 +234,7 @@ async function runJarvisBuild(page, { targetKey, target, mode, log, signal, runI
 
 	assertNotAborted(signal);
 	await clickButton(page, ["Build", "빌드"], `${target.label} 팝업의 Build 버튼을 찾을 수 없습니다.`);
-	await page.waitForLoadState("networkidle", { timeout: LONG_TIMEOUT }).catch(() => { });
+	await page.waitForLoadState("networkidle", { timeout: MEDIUM_TIMEOUT }).catch(() => { });
 	await waitStepDelay(page, stepDelayMs, log, `${target.label} Build 요청 후`, signal);
 
 	const signalText = await detectJarvisAccepted(page);
@@ -392,30 +397,7 @@ async function clickFirstVisible(locator) {
 }
 
 async function detectJarvisAccepted(page) {
-	const selectors = [
-		'[role="alert"]',
-		".toast",
-		".Toastify__toast",
-		".ant-message",
-		".ant-notification",
-		".alert",
-		".notification",
-		".message"
-	];
-	const patterns = ["성공", "요청", "시작", "접수", "빌드", "Build", "build", "started", "queued"];
-
-	for (const selector of selectors) {
-		const locator = page.locator(selector);
-		const count = await locator.count().catch(() => 0);
-		for (let index = 0; index < Math.min(count, 5); index += 1) {
-			const text = await locator.nth(index).innerText({ timeout: SHORT_TIMEOUT }).catch(() => "");
-			if (patterns.some((pattern) => text.includes(pattern))) {
-				return text.trim().slice(0, 300);
-			}
-		}
-	}
-
-	return waitForAnyVisibleText(page, patterns, MEDIUM_TIMEOUT).catch(() => "요청 접수 신호를 명확히 찾지 못했지만 Build 클릭은 완료되었습니다.");
+	return waitForFirstJarvisBuildOrDeploySuccess(page);
 }
 
 async function waitForAnyVisibleText(page, texts, timeout) {
@@ -438,6 +420,48 @@ async function waitForAnyVisibleText(page, texts, timeout) {
 		await page.waitForTimeout(500);
 	}
 	throw lastError || new Error("대기 중인 텍스트를 찾지 못했습니다.");
+}
+
+async function waitForFirstJarvisBuildOrDeploySuccess(page) {
+	const deadline = Date.now() + JARVIS_STATUS_TIMEOUT;
+	let lastClassName = "";
+	let lastErrorMessage = "";
+
+	while (Date.now() < deadline) {
+		const icon = page.locator(JARVIS_STATUS_ICON_SELECTOR).first();
+		const iconCount = await page.locator(JARVIS_STATUS_ICON_SELECTOR).count().catch((error) => {
+			lastErrorMessage = error.message;
+			return 0;
+		});
+
+		if (iconCount > 0) {
+			const parent = icon.locator("xpath=..");
+			lastClassName = (await parent.getAttribute("class", { timeout: SHORT_TIMEOUT }).catch((error) => {
+				lastErrorMessage = error.message;
+				return "";
+			})) || "";
+
+			if (hasJarvisSuccessClass(lastClassName)) {
+				return `Jarvis status is ${JARVIS_SUCCESS_CLASS}.`;
+			}
+		}
+
+		await page.waitForTimeout(1_000);
+	}
+
+	throw new Error(
+		`Jarvis 빌드/배포 성공 상태를 확인하지 못했습니다. 첫 번째 ${JARVIS_STATUS_ICON_SELECTOR} 부모 class: ${lastClassName || "(없음)"}${lastErrorMessage ? ` / ${lastErrorMessage}` : ""}`
+	);
+}
+
+export function hasJarvisSuccessClass(className) {
+	return String(className)
+		.split(/\s+/)
+		.includes(JARVIS_SUCCESS_CLASS);
+}
+
+export function hasJarvisDeploySuccessClass(className) {
+	return hasJarvisSuccessClass(className);
 }
 
 async function waitForLoginOrPage(page, expectedHost, log, signal) {

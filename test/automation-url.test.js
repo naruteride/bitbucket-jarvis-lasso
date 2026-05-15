@@ -1,6 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { BITBUCKET_MERGE_CONFIRM_SELECTOR, buildBitbucketPullRequestUrl } from "../src/automation.js";
+import {
+  BITBUCKET_MERGE_CONFIRM_SELECTOR,
+  JARVIS_STATUS_ICON_SELECTOR,
+  JARVIS_SUCCESS_CLASS,
+  hasJarvisSuccessClass,
+  buildBitbucketPullRequestUrl
+} from "../src/automation.js";
 
 test("adds sourceBranch query parameter for a feature branch", () => {
   const url = buildBitbucketPullRequestUrl(
@@ -26,4 +32,11 @@ test("does not duplicate refs/heads prefix", () => {
 
 test("uses Bitbucket dialog action button for merge confirmation", () => {
   assert.equal(BITBUCKET_MERGE_CONFIRM_SELECTOR, '[role="dialog"] button.action-button');
+});
+
+test("detects Jarvis build/deploy success class exactly", () => {
+  assert.equal(JARVIS_STATUS_ICON_SELECTOR, "i.fas.fa-circle");
+  assert.equal(JARVIS_SUCCESS_CLASS, "deploy-status-0");
+  assert.equal(hasJarvisSuccessClass("deploy-status-1 deploy-status-0"), true);
+  assert.equal(hasJarvisSuccessClass("deploy-status-01"), false);
 });
