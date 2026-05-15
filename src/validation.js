@@ -1,7 +1,9 @@
 import { PROJECTS } from "./config.js";
 
-const TARGET_ORDER = ["was", "web"];
+const TARGET_ORDER = ["web", "was"];
 const VALID_MODES = new Set(["buildOnly", "buildAndDeploy"]);
+const DEFAULT_STEP_DELAY_SECONDS = 1;
+const MAX_STEP_DELAY_SECONDS = 30;
 
 export function validateRunRequest(input) {
   const errors = [];
@@ -10,6 +12,7 @@ export function validateRunRequest(input) {
   const branchName = typeof body.branchName === "string" ? body.branchName.trim() : "";
   const mergePr = Boolean(body.mergePr);
   const mode = typeof body.mode === "string" ? body.mode : "";
+  const stepDelaySeconds = normalizeStepDelaySeconds(body.stepDelaySeconds);
   const browserExecutablePath =
     typeof body.browserExecutablePath === "string" ? body.browserExecutablePath.trim() : "";
 
@@ -45,9 +48,21 @@ export function validateRunRequest(input) {
       mergePr,
       targets,
       mode,
+      stepDelaySeconds,
       browserExecutablePath
     }
   };
+}
+
+function normalizeStepDelaySeconds(value) {
+  if (value === undefined || value === null || value === "") {
+    return DEFAULT_STEP_DELAY_SECONDS;
+  }
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) {
+    return DEFAULT_STEP_DELAY_SECONDS;
+  }
+  return Math.min(MAX_STEP_DELAY_SECONDS, Math.max(0, numeric));
 }
 
 function isDevelopBranch(branchName) {

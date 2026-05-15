@@ -49,7 +49,8 @@ export async function rememberRunSelection(selection) {
       branchName,
       mergePr: selection.mergePr,
       targets: selection.targets,
-      mode: selection.mode
+      mode: selection.mode,
+      stepDelaySeconds: selection.stepDelaySeconds
     }
   });
 }
@@ -65,7 +66,11 @@ function normalizeState(value) {
     lastSelection: {
       ...DEFAULT_SELECTION,
       ...lastSelection,
-      targets: Array.isArray(lastSelection.targets) && lastSelection.targets.length ? lastSelection.targets : DEFAULT_SELECTION.targets
+      targets: Array.isArray(lastSelection.targets) && lastSelection.targets.length ? lastSelection.targets : DEFAULT_SELECTION.targets,
+      stepDelaySeconds:
+        typeof lastSelection.stepDelaySeconds === "number" && Number.isFinite(lastSelection.stepDelaySeconds)
+          ? lastSelection.stepDelaySeconds
+          : DEFAULT_SELECTION.stepDelaySeconds
     },
     browserExecutablePath: typeof state.browserExecutablePath === "string" ? state.browserExecutablePath : ""
   };

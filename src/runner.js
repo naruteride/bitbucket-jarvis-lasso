@@ -135,6 +135,7 @@ function summarizeRequest(request) {
     branchName: request.branchName,
     mergePr: request.mergePr,
     targets: request.targets,
-    mode: request.mode
+    mode: request.mode,
+    stepDelaySeconds: request.stepDelaySeconds
   };
 }

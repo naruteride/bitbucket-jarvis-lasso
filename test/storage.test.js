@@ -15,6 +15,7 @@ test("remembers recent branch and last selection", async () => {
     mergePr: false,
     targets: ["web"],
     mode: "buildAndDeploy",
+    stepDelaySeconds: 4.5,
     browserExecutablePath: "C:\\Browser\\chrome.exe"
   });
 
@@ -23,6 +24,7 @@ test("remembers recent branch and last selection", async () => {
   assert.equal(state.lastSelection.projectKey, "promotion");
   assert.equal(state.lastSelection.branchName, "feature/promo-42");
   assert.equal(state.lastSelection.mode, "buildAndDeploy");
+  assert.equal(state.lastSelection.stepDelaySeconds, 4.5);
   assert.equal(state.browserExecutablePath, "C:\\Browser\\chrome.exe");
 
   await fs.rm(tempDir, { recursive: true, force: true });

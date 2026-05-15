@@ -17,6 +17,11 @@
           <span id="statusBadge" class="badge idle">대기 중</span>
         </header>
 
+        <div class="notice">
+          자동화 창은 일반 Chrome 프로필이 아니라 <code>data/browser-profile</code> 전용 프로필을 사용합니다.
+          첫 실행 또는 세션 만료 시 열린 자동화 창에서 Atlassian/Jarvis 로그인을 완료한 뒤 다시 실행하세요.
+        </div>
+
         <form id="runForm" class="form">
           <fieldset>
             <legend>프로젝트</legend>
@@ -55,17 +60,25 @@
             <legend>대상</legend>
             <div class="targets">
               <label class="target">
-                <input type="checkbox" name="targets" value="was" checked />
-                <span>WAS</span>
-                <small id="wasHint"></small>
-              </label>
-              <label class="target">
                 <input type="checkbox" name="targets" value="web" />
                 <span>WEB</span>
                 <small id="webHint"></small>
               </label>
+              <label class="target">
+                <input type="checkbox" name="targets" value="was" checked />
+                <span>WAS</span>
+                <small id="wasHint"></small>
+              </label>
             </div>
           </fieldset>
+
+          <details class="advanced">
+            <summary>대기시간 설정</summary>
+            <label class="field">
+              <span>각 단계 대기시간(초)</span>
+              <input id="stepDelaySeconds" name="stepDelaySeconds" type="number" min="0" max="30" step="0.5" value="1" />
+            </label>
+          </details>
 
           <details class="advanced">
             <summary>브라우저 경로</summary>

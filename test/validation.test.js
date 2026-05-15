@@ -12,7 +12,8 @@ test("accepts a valid build-only request", () => {
   });
 
   assert.equal(result.ok, true);
-  assert.deepEqual(result.value.targets, ["was", "web"]);
+  assert.deepEqual(result.value.targets, ["web", "was"]);
+  assert.equal(result.value.stepDelaySeconds, 1);
 });
 
 test("rejects missing branch", () => {
@@ -52,4 +53,18 @@ test("rejects empty target selection", () => {
 
   assert.equal(result.ok, false);
   assert.match(result.errors.join("\n"), /WAS 또는 WEB/);
+});
+
+test("normalizes configured step delay", () => {
+  const result = validateRunRequest({
+    projectKey: "event",
+    branchName: "feature/event-123",
+    mergePr: false,
+    targets: ["was"],
+    mode: "buildOnly",
+    stepDelaySeconds: "4.5"
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.value.stepDelaySeconds, 4.5);
 });

@@ -67,7 +67,8 @@ export const DEFAULT_SELECTION = {
   branchName: "",
   mergePr: true,
   targets: ["was"],
-  mode: "buildOnly"
+  mode: "buildOnly",
+  stepDelaySeconds: 1
 };
 
 export function detectBrowserExecutablePath() {

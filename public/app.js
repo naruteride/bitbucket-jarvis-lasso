@@ -9,6 +9,7 @@ const projectOptions = document.querySelector("#projectOptions");
 const branchNameInput = document.querySelector("#branchName");
 const recentBranches = document.querySelector("#recentBranches");
 const mergePrInput = document.querySelector("#mergePr");
+const stepDelayInput = document.querySelector("#stepDelaySeconds");
 const browserPathInput = document.querySelector("#browserExecutablePath");
 const summary = document.querySelector("#summary");
 const runButton = document.querySelector("#runButton");
@@ -87,6 +88,7 @@ function applyLastSelection() {
   }
 
   browserPathInput.value = state.config.browserExecutablePath || "";
+  stepDelayInput.value = selection.stepDelaySeconds ?? 1;
 }
 
 async function onSubmit(event) {
@@ -163,6 +165,7 @@ function readPayload() {
     mergePr: mergePrInput.checked,
     targets: [...form.querySelectorAll('input[name="targets"]:checked')].map((input) => input.value),
     mode: getRadio("mode"),
+    stepDelaySeconds: Number(stepDelayInput.value || 1),
     browserExecutablePath: browserPathInput.value.trim()
   };
 }
@@ -177,6 +180,9 @@ function validatePayload(payload) {
   }
   if (!payload.targets.length) {
     errors.push("WAS 또는 WEB 대상 중 하나 이상을 선택하세요.");
+  }
+  if (!Number.isFinite(payload.stepDelaySeconds) || payload.stepDelaySeconds < 0 || payload.stepDelaySeconds > 30) {
+    errors.push("각 단계 대기시간은 0초 이상 30초 이하로 입력하세요.");
   }
   return errors;
 }
@@ -193,7 +199,7 @@ function updateSummary() {
 
 function buildSummary(payload) {
   const project = state.config.projects[payload.projectKey];
-  const targetNames = payload.targets.map((target) => project.jarvis[target].label).join(", ") || "선택 없음";
+  const targetNames = orderedTargets(payload.targets).map((target) => project.jarvis[target].label).join(", ") || "선택 없음";
   const mode = payload.mode === "buildAndDeploy" ? "빌드 후 배포" : "빌드만";
   const pr = payload.mergePr ? "PR 생성/머지 진행" : "PR 생략";
   return [
@@ -201,8 +207,14 @@ function buildSummary(payload) {
     `브랜치: ${payload.branchName || "-"}`,
     `처리: ${pr}`,
     `대상: ${targetNames}`,
-    `모드: ${mode}`
+    `모드: ${mode}`,
+    `단계 대기: ${payload.stepDelaySeconds || 0}초`
   ].join("\n");
+}
+
+function orderedTargets(targets) {
+  const selected = new Set(targets);
+  return ["web", "was"].filter((target) => selected.has(target));
 }
 
 function describeTarget(target) {
