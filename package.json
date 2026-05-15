@@ -1,0 +1,17 @@
+{
+  "name": "bitbucket-jarvis-lasso",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Local control panel for Bitbucket PR merge and Jarvis build/deploy automation.",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "playwright-core": "^1.49.1"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

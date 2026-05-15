@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bitbucket Jarvis Lasso</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="panel">
+        <header class="header">
+          <div>
+            <h1>Bitbucket Jarvis Lasso</h1>
+            <p>PR 머지와 Jarvis 빌드/배포 요청을 한 번에 실행합니다.</p>
+          </div>
+          <span id="statusBadge" class="badge idle">대기 중</span>
+        </header>
+
+        <form id="runForm" class="form">
+          <fieldset>
+            <legend>프로젝트</legend>
+            <div id="projectOptions" class="segmented"></div>
+          </fieldset>
+
+          <label class="field">
+            <span>브랜치</span>
+            <input id="branchName" name="branchName" list="recentBranches" autocomplete="off" placeholder="feature/my-branch" />
+            <datalist id="recentBranches"></datalist>
+          </label>
+
+          <div class="grid two">
+            <fieldset>
+              <legend>처리</legend>
+              <label class="check">
+                <input id="mergePr" name="mergePr" type="checkbox" checked />
+                <span>develop으로 PR 생성/머지</span>
+              </label>
+            </fieldset>
+
+            <fieldset>
+              <legend>실행 모드</legend>
+              <label class="radio">
+                <input type="radio" name="mode" value="buildOnly" checked />
+                <span>빌드만</span>
+              </label>
+              <label class="radio">
+                <input type="radio" name="mode" value="buildAndDeploy" />
+                <span>빌드 후 배포</span>
+              </label>
+            </fieldset>
+          </div>
+
+          <fieldset>
+            <legend>대상</legend>
+            <div class="targets">
+              <label class="target">
+                <input type="checkbox" name="targets" value="was" checked />
+                <span>WAS</span>
+                <small id="wasHint"></small>
+              </label>
+              <label class="target">
+                <input type="checkbox" name="targets" value="web" />
+                <span>WEB</span>
+                <small id="webHint"></small>
+              </label>
+            </div>
+          </fieldset>
+
+          <details class="advanced">
+            <summary>브라우저 경로</summary>
+            <label class="field">
+              <span>Chrome/Edge 실행 파일</span>
+              <input id="browserExecutablePath" name="browserExecutablePath" placeholder="C:\Program Files\Google\Chrome\Application\chrome.exe" />
+            </label>
+          </details>
+
+          <div class="summary" id="summary"></div>
+
+          <div class="actions">
+            <button id="runButton" type="submit">실행</button>
+            <button id="cancelButton" type="button" class="secondary" disabled>취소</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel log-panel">
+        <div class="log-header">
+          <h2>실행 로그</h2>
+          <button id="clearLogButton" type="button" class="secondary small">지우기</button>
+        </div>
+        <ol id="logList" class="logs"></ol>
+      </section>
+    </main>
+
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>
