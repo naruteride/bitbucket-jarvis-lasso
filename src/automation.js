@@ -143,7 +143,7 @@ async function runBitbucketMerge(page, project, branchName, log, signal, runId, 
 
 	assertNotAborted(signal);
 	await clickButton(page, ["Create", "Create pull request", "생성"], "PR을 생성할 수 없습니다.");
-	await page.waitForLoadState("networkidle", { timeout: MEDIUM_TIMEOUT }).catch(() => { });
+	await page.waitForLoadState("networkidle", { timeout: LONG_TIMEOUT }).catch(() => { });
 	await waitStepDelay(page, stepDelayMs, log, "PR Create 후", signal);
 
 	assertNotAborted(signal);
